@@ -25,13 +25,12 @@ RADIUS = int(SQUARESIZE/2 - 5)
 width = COL_COUNT * SQUARESIZE
 height = (ROW_COUNT+1) * SQUARESIZE
 
-
 #for defining turn
-MINIMAX = "minimax"
+HUMAN = "human"
 MCTS = "mcts"
 
 #for defining player tiles
-RED = -1 # minimax
+RED = -1 # human
 BLACK = 1 # mcts
 
 EMPTY = 0
@@ -89,14 +88,14 @@ def main():
 def runGame(isFirstGame,winnerCountHuman,winnerCountMcts,tieCount):
 
     if isFirstGame:
-        turn = MCTS
+        turn = HUMAN
         print("HAVE FUN !!")
     else:
         # first player is chose randomly
         if random.randint(0, 1) == 0:
             turn = MCTS
         else:
-            turn = MINIMAX
+            turn = HUMAN
 
     #creates board object
     board = Board()
@@ -109,7 +108,7 @@ def runGame(isFirstGame,winnerCountHuman,winnerCountMcts,tieCount):
     # Main Game Loop
     while True:
 
-        if turn == MINIMAX: # minimax player turn
+        if turn == HUMAN: # human player turn
             getHumanMove(board)
             if board.isWinner(board.board,RED):
                 winnerCountHuman += 1
@@ -125,7 +124,7 @@ def runGame(isFirstGame,winnerCountHuman,winnerCountMcts,tieCount):
                 winnerImg = MCTSWINNER
                 print("MonteCarlo WINNER!!")
                 break
-            turn = MINIMAX # switches to the other player
+            turn = HUMAN # switches to the other player
 
         # checks if board is completed if it is, that means it is tie
         if board.isBoardFull(board.board):
@@ -145,7 +144,7 @@ def runGame(isFirstGame,winnerCountHuman,winnerCountMcts,tieCount):
 
 
 def getHumanMove(board):
-    
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
