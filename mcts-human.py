@@ -329,7 +329,7 @@ class Node(object):
         -For the nodes that is not visited yet and has no children nodes,
         -visited but has no children nodes,
         -visited and has children nodes.
-        It returns the result that the number represents of players(which 1 for MCTS and -1 for Minimax, 0 for else)
+        It returns the result that the number represents of players(which 1 for MCTS and -1 for Human, 0 for else)
         """
 
         if self.moves == []:
@@ -408,7 +408,7 @@ class Node(object):
         while(moves):
             # it choose a move randomly and change the current copy state according this move
             state = self.game.changeState(player,random.choice(moves),deepcopy(state))
-            # it checks the winner.(if player is MCTS reslt = 1, player is Minimax result = -1 otherwise result is 0
+            # it checks the winner.(if player is MCTS reslt = 1, player is Human result = -1 otherwise result is 0
             if self.game.isWinner(state,player):
                 result = player
                 if result !=0:
