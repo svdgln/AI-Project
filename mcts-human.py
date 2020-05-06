@@ -45,7 +45,7 @@ def main():
     global BLACKTOKENIMG, BOARDIMG, HUMANWINNERIMG
     global COMPUTERWINNERIMG, WINNERRECT, TIEWINNERIMG
     global MCTSWINNER, MINIMAXWINNER
-    global winnerCountMinimax,winnerCountMcts, tieCount
+    global winnerCountHuman,winnerCountMcts, tieCount
 
 
     pygame.init()
