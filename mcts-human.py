@@ -25,6 +25,7 @@ RADIUS = int(SQUARESIZE/2 - 5)
 width = COL_COUNT * SQUARESIZE
 height = (ROW_COUNT+1) * SQUARESIZE
 
+
 #for defining turn
 MINIMAX = "minimax"
 MCTS = "mcts"
