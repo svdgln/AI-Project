@@ -74,18 +74,55 @@ def main():
     tieCount = 0
     countGame = 0
 
+    totalMoveAlpha = 0
+    totalMoveMCTS = 0
+    staticMoveAlpha = 0
+    staticMoveMCTS = 0
+    sumMoveAlpha = 0
+    sumMoveMCTS = 0
+    winnerStaticMcts = 0
+    winnerStaticAlpha = 0
+    alltimeThinkA = 0
+    alltimeThinkM = 0
+    avthinkM = 0
+    avthinkA = 0
+
+
     while True:
         countGame += 1
-        winnerCountMinimax , winnerCountMcts, tieCount = runGame(isFirstGame,winnerCountMinimax,winnerCountMcts,tieCount)
+        winnerCountMinimax , winnerCountMcts, tieCount, totalMoveAlpha,totalMoveMCTS,sumMoveAlpha,sumMoveMCTS,winnerStaticAlpha,winnerStaticMcts,alltimeThinkA,alltimeThinkM = runGame(isFirstGame,winnerCountMinimax,winnerCountMcts,tieCount,totalMoveAlpha,totalMoveMCTS,sumMoveAlpha,sumMoveMCTS,winnerStaticAlpha,winnerStaticMcts,alltimeThinkA,alltimeThinkM)
         isFirstGame = False
+        staticMoveAlpha = sumMoveAlpha / countGame
+        staticMoveMCTS = sumMoveMCTS / countGame
+        avthinkA = alltimeThinkA / totalMoveAlpha 
+        avthinkM = alltimeThinkM / totalMoveMCTS
+
         print("Total game: " + str(countGame))
         print("Count Minimax Winning : " + str(winnerCountMinimax))
         print("Count MCTS Winning : " + str(winnerCountMcts))
         print("Count Ties : " + str(tieCount))
+        print("Total moves MCTS in last game  : " + str(totalMoveMCTS))
+        print("Total moves Alpha-beta in last game : " + str(totalMoveAlpha))
+        print("Summation moves Alpha-beta in whole game: " + str(sumMoveAlpha))
+        print("Summation moves MCTS in whole game: " + str(sumMoveMCTS))
+        print("Static moves MCTS : " + str(staticMoveMCTS))
+        print("Static moves Alpha-beta : " + str(staticMoveAlpha))
+        print("")
+        print("alltimeThinkA : " + str(alltimeThinkA))
+        print("alltimeThinkM : "  + str(alltimeThinkM))
+        print("Avarage time think for ALphabeta : "  + str(avthinkA))
+        print("Avarage time think for MCTS : "  + str(avthinkM))
+        totalMoveMCTS=0
+        totalMoveAlpha=0
+        avthinkM = 0
+        avthinkA = 0
+        alltimeThinkA =0
+        alltimeThinkM =0
+        pygame.time.wait(3000)
 
 
 
-def runGame(isFirstGame,winnerCountMinimax,winnerCountMcts,tieCount):
+def runGame(isFirstGame,winnerCountMinimax,winnerCountMcts,tieCount,totalMoveAlpha,totalMoveMCTS,sumMoveAlpha,sumMoveMCTS,winnerStaticAlpha,winnerStaticMcts,alltimeThinkA,alltimeThinkM):
 
     if isFirstGame:
         turn = MCTS
@@ -108,28 +145,36 @@ def runGame(isFirstGame,winnerCountMinimax,winnerCountMcts,tieCount):
     # Main Game Loop
     while True:
 
-        if turn == MINIMAX: # minimax player turn
-            getMinimaxMove(board)
-            if board.isWinner(board.board,RED):
-                winnerCountMinimax += 1
-                winnerImg = MINIMAXWINNER
-                print("Minimax-alphabeta WINNER!!")
-                break
-            turn = MCTS # switches to the other player
-
-        else:
-            getMonteMove(board) # MCTS player turn
-            if board.isWinner(board.board,BLACK):
-                winnerCountMcts += 1
-                winnerImg = MCTSWINNER
-                print("MonteCarlo WINNER!!")
-                break
-            turn = MINIMAX # switches to the other player
-
-        # checks if board is completed if it is, that means it is tie
         if board.isBoardFull(board.board):
             tieCount += 1
             winnerImg = TIEWINNERIMG
+            print("TIE!!")
+            break
+        else:
+
+            if turn == MINIMAX: # minimax player turn
+                totalMoveAlpha,sumMoveAlpha, timeSinceThinkA = getMinimaxMove(board,totalMoveAlpha,sumMoveAlpha)
+                alltimeThinkA = alltimeThinkA + timeSinceThinkA
+                if board.isWinner(board.board,RED):
+
+                    winnerCountMinimax += 1
+                    winnerImg = MINIMAXWINNER
+                    print("Minimax-alphabeta WINNER!!")
+                    break
+                turn = MCTS # switches to the other player
+
+            else:
+                totalMoveMCTS,sumMoveMCTS, timeSinceThinkM = getMonteMove(board,totalMoveMCTS,sumMoveMCTS) # MCTS player turn
+                alltimeThinkM = alltimeThinkM + timeSinceThinkM
+                if board.isWinner(board.board,BLACK):
+                    winnerCountMcts += 1
+                    winnerImg = MCTSWINNER
+                    print("MonteCarlo WINNER!!")
+                    break
+                turn = MINIMAX # switches to the other player
+
+        # checks if board is completed if it is, that means it is tie
+
 
     # displays the winner for a while and repeats the game until player quits
     while display:
@@ -139,55 +184,63 @@ def runGame(isFirstGame,winnerCountMinimax,winnerCountMcts,tieCount):
         pygame.time.wait(2500)
         display = False
 
-    return winnerCountMinimax, winnerCountMcts, tieCount
+    return winnerCountMinimax, winnerCountMcts, tieCount, totalMoveAlpha, totalMoveMCTS,sumMoveAlpha,sumMoveMCTS,winnerStaticAlpha,winnerStaticMcts,alltimeThinkA,alltimeThinkM
         
 
 
-def getMinimaxMove(board):
+def getMinimaxMove(board,totalMoveAlpha,sumMoveAlpha):
     '''
         This function calls minimax algorithm to find the best column(move) to play and the score of it.
         If the column valid for the current state of the board, it is drew and printed.
     '''
     startTime = pygame.time.get_ticks()
 
-    col, minimaxScore = minimax(board, 2, -math.inf, math.inf, True)
+    col, minimaxScore = minimax(board, 3, -math.inf, math.inf, True)
 
     if board.isValidMove(col):
         board.setState(board.changeState(RED,col,board.board))
+        totalMoveAlpha += 1
+        sumMoveAlpha += 1
         board.drawBoard(board.board)
         board.printBoard(board.board)
-        timeSinceThink = pygame.time.get_ticks() - startTime
-        message = "Milliseconds since alpha beta think :" + str(timeSinceThink)
+        timeSinceThinkA = pygame.time.get_ticks() - startTime
+        message = "Milliseconds since alpha beta think :" + str(timeSinceThinkA)
         print(message)
         
 
     pygame.display.update()
     FPSCLOCK.tick(60)
 
+    return totalMoveAlpha, sumMoveAlpha, timeSinceThinkA
+
 
     
 
-def getMonteMove(board):
+def getMonteMove(board,totalMoveMCTS,sumMoveMCTS):
     '''
         This function calls MCTS algorithm to find the best column(move) to play.
         If the column valid for the current state of the board, it is drew and printed.
     '''
     startTime = pygame.time.get_ticks()
-    ai = MonteCarlo(1,board,BLACK)
+    ai = MonteCarlo(5,board,BLACK)
 
     col = ai.run(board.board)
 
     if board.isValidMove(col):
         board.setState(board.changeState(BLACK,col,board.board))
+        totalMoveMCTS += 1
+        sumMoveMCTS += 1
         board.drawBoard(board.board)
         board.printBoard(board.board)
-        timeSinceThink = pygame.time.get_ticks() - startTime
-        message = "Milliseconds since monte-carlo think :" + str(timeSinceThink)
+        timeSinceThinkM = pygame.time.get_ticks() - startTime
+        message = "Milliseconds since monte-carlo think :" + str(timeSinceThinkM)
         print(message)
         
 
     pygame.display.update()
     FPSCLOCK.tick(60)
+
+    return totalMoveMCTS, sumMoveMCTS, timeSinceThinkM
 
 
 
@@ -317,6 +370,10 @@ class Node(object):
         self.children = []
 
 
+    def update(self,result):
+        self.visit += 1
+        self.wins += result
+
 
     def simulate(self):
         """This function simulates step for nodes.Function is splitted into 3 cases.
@@ -332,7 +389,9 @@ class Node(object):
         if (not self.children) and self.visits == 0:
             self.visits = 1
             result = self.rollout(deepcopy(self.state))
-            self.wins = self.wins + result#*self.player
+            
+            self.wins = self.wins + result
+
             return result
 
         # If the roll-out is ran for the leaf node, creating children is needed.
@@ -344,17 +403,22 @@ class Node(object):
                 self.children.append(node)
 
             result = self.children[0].simulate()
+
             self.visits = self.visits + 1
+
             self.wins = self.wins + result
+
             return result
         #If the node has child and alreay visited. We need to choose the best child and make simulation according this node.
         # selecting best child
         else:
             result = self.selectBestChild().simulate()
 
+            #backpropagation 
             self.visits = self.visits + 1
 
             self.wins = self.wins + result
+
             return result
 
 
@@ -554,45 +618,42 @@ def scanFours(board):
     '''
 
     scan = []
-    locations = []
-
     for r in range(ROW_COUNT):
         for c in range(COL_COUNT):
             # horizontal
             if c + 3 < COL_COUNT:
                 scan.append([board.board[r][c+i] for i in range(4)])
-                locations.append([(r,c+i) for i in range(4)])
+                
             # vertical
             if r + 3 < ROW_COUNT:
                 scan.append([board.board[r+i][c] for i in range(4)])
-                locations.append([(r+i,c) for i in range(4)])
+                
             # negative sloped
             if r - 3 >= 0 and c + 3 < COL_COUNT:
                 scan.append([board.board[r-i][c+i] for i in range(4)])
-                locations.append([(r-i,c+i) for i in range(4)])
+                
             # positive sloped
             if r + 3 < ROW_COUNT and c + 3 < COL_COUNT:
                 scan.append([board.board[r+i][c+i] for i in range(4)])
-                locations.append([(r+i,c+i) for i in range(4)])
+                
 
-    return scan,locations
-
+    return scan
 
 def scorer(board):
     '''
         This function score combinations made by Minimax and MCTS players heuristicly.
     '''
     score = 0
-    scan, locations = scanFours(board)
+    scan = scanFours(board)
 
     # score positively for Minimax tile(RED) in center column
     centerColumn = [board.board[i][COL_COUNT // 2] for i in range(ROW_COUNT)]
-    score += 3 * centerColumn.count(RED)
+    score += 5 * centerColumn.count(RED)
 
     for i in range(len(scan)):
         # score positively for combinations made by Minimax Player
         if scan[i].count(RED) == 4:
-            score += 100
+            score += 1000
 
         if scan[i].count(RED) == 3 and scan[i].count(EMPTY) == 1:
             score += 10
@@ -602,14 +663,13 @@ def scorer(board):
 
         # score negatively for combinations made by MCTS Player
         if scan[i].count(BLACK) == 4:
-            score += -100
+            score += -1000
 
         if scan[i].count(BLACK) == 3 and scan[i].count(EMPTY) == 1:
             score += -10
 
         elif scan[i].count(BLACK) == 2 and scan[i].count(EMPTY) == 2:
             score += -4
-
 
 
     return score
