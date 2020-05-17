@@ -30,10 +30,10 @@ HUMAN = "human"
 MINIMAX = "MINIMAX"
 
 #for defining player tiles
+EMPTY = 0
 RED = -1 # minimax
 BLACK = 1 # human
 
-EMPTY = 0
 startTime = 0
 
 HIGHVALUE = 100000000000000
@@ -121,7 +121,7 @@ def runGame(isFirstGame,winnerCountMinimax,winnerCountHuman,tieCount):
             getHumanMove(board) # Human player turn
             if board.isWinner(board.board,BLACK):
                 winnerCountHuman += 1
-                winnerImg = HUMANWINNER
+                winnerImg = HUMANWINNERIMG
                 print("Human WINNER!!")
                 break
             turn = MINIMAX # switches to the other player
@@ -300,11 +300,43 @@ class Board(object):
                 if state[r][c] == tile and state[r - 1][c + 1] == tile and state[r - 2][c + 2] == tile and state[r - 3][c + 3] == tile:
                     return True
 
+    def __mtdf(self, g, d):
+    
+        upperBound = +1000
+        lowerBound = -1000
+        best = g
+        while lowerBound < upperBound:
+            if g[0] == lowerBound:
+                beta = g[0]+1
+            else:
+                beta = g[0]
+            g = self.__minimax(True, d, beta-1, beta)
+            if g[1]!=None:
+                best = g
+            if g[0] < beta:
+                upperBound = g[0]
+            else:
+                lowerBound = g[0]
+        return best
+ 
+    def __iterative_deepening(self,think):
+        g = (3,None)
+        start = time()
+        for d in range(1,10):
+            g = self.__mtdf(g, d)
+            if time()-start>think:
+                break
+        return g;
+
+    def best(self):
+        return self.__iterative_deepening(2)[1]
+
 
 
 
 
 #-------------------------MINIMAX-ALPHA BETA PRUNNING-----------------------
+
 
 
 
@@ -411,45 +443,43 @@ def scanFours(board):
     '''
 
     scan = []
-    locations = []
-
     for r in range(ROW_COUNT):
         for c in range(COL_COUNT):
             # horizontal
             if c + 3 < COL_COUNT:
                 scan.append([board.board[r][c+i] for i in range(4)])
-                locations.append([(r,c+i) for i in range(4)])
+                
             # vertical
             if r + 3 < ROW_COUNT:
                 scan.append([board.board[r+i][c] for i in range(4)])
-                locations.append([(r+i,c) for i in range(4)])
+                
             # negative sloped
             if r - 3 >= 0 and c + 3 < COL_COUNT:
                 scan.append([board.board[r-i][c+i] for i in range(4)])
-                locations.append([(r-i,c+i) for i in range(4)])
+                
             # positive sloped
             if r + 3 < ROW_COUNT and c + 3 < COL_COUNT:
                 scan.append([board.board[r+i][c+i] for i in range(4)])
-                locations.append([(r+i,c+i) for i in range(4)])
+                
 
-    return scan,locations
+    return scan
 
 
 def scorer(board):
     '''
-        This function score combinations made by Minimax and Human players heuristicly.
+        This function score combinations made by Minimax and MCTS players heuristicly.
     '''
     score = 0
-    scan, locations = scanFours(board)
+    scan = scanFours(board)
 
     # score positively for Minimax tile(RED) in center column
     centerColumn = [board.board[i][COL_COUNT // 2] for i in range(ROW_COUNT)]
-    score += 3 * centerColumn.count(RED)
+    score += 5 * centerColumn.count(RED)
 
     for i in range(len(scan)):
         # score positively for combinations made by Minimax Player
         if scan[i].count(RED) == 4:
-            score += 100
+            score += 1000
 
         if scan[i].count(RED) == 3 and scan[i].count(EMPTY) == 1:
             score += 10
@@ -457,16 +487,15 @@ def scorer(board):
         elif scan[i].count(RED) == 2 and scan[i].count(EMPTY) == 2:
             score += 4
 
-        # score negatively for combinations made by Human Player
+        # score negatively for combinations made by MCTS Player
         if scan[i].count(BLACK) == 4:
-            score += -100
+            score += -1000
 
         if scan[i].count(BLACK) == 3 and scan[i].count(EMPTY) == 1:
             score += -10
 
         elif scan[i].count(BLACK) == 2 and scan[i].count(EMPTY) == 2:
             score += -4
-
 
 
     return score
